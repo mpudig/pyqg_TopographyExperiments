@@ -16,4 +16,4 @@ module purge
 singularity exec \
 	--overlay /scratch/mp6191/pyqg_dev_env/overlay-15GB-500K.ext3:ro /scratch/work/public/singularity/cuda11.2.2-cudnn8-devel-ubuntu20.04.sif \
 	/bin/bash -c "source /ext3/env.sh;
-python -u /scratch/mp6191/pyqg_expts/<EXPTNAME>/setup/layered_model/execute_layered_model.py"
+python -u /scratch/mp6191/pyqg_expts/<EXPTNAME>/setup/execute_model/layered_model/execute_layered_model.py"
