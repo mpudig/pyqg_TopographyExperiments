@@ -197,7 +197,7 @@ def flat_bottom_modes(nz, z):
         
     return modes
 
-def flat_bottom_radii(f0, N0, Hmax, nz):
+def flat_bottom_radii(g, f0, N0, Hmax, nz):
     '''
     The flat bottom deformation radii from the eigenvalue problem. Note that this assumes linear stratification
     '''
