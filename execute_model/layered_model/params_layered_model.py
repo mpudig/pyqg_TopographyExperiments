@@ -81,11 +81,13 @@ htop = functions.monoscale_random(L, nx, K_min, K_max, h_rms)
 dt = 60 * 60 * 3                  # time step [s]
 tmax = 60 * 60 * 24 * 365 * 10    # end of integration [s]
 
-tavestart = 0.                       # start time for averaging [s]
-taveint = 60 * 60 * 24 * 1           # time interval used for averaging of diagnostics [s]
+tavestart = 0.                    # start time for averaging [s]
+taveint = 60 * 60 * 24 * 1        # time interval used for averaging of diagnostics [s]
 
-tsnapstart = tavestart
-tsnapint = taveint + dt
+tsnapstart = tavestart            # start time for yielding model states
+tsnapint = taveint + dt           # time interval at which to yield model states 
+
+tc_save = 1000                    # The timestep frequency over which to save accumulated model states to a .nc dataset file
 
 
 

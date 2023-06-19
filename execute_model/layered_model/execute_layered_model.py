@@ -54,6 +54,8 @@ m.set_q(params.qi)
 snapshots = diags.snapshots
 averages = diags.averages
 path = params.path
+tc_save = params.tc_save
+
 
 # Save topography field 
 x = m.x[0, :]
@@ -72,13 +74,16 @@ htop_path = path + '/htop.nc'
 htop.to_netcdf(htop_path)
 
 # Run and save model
-m_ds = functions.save_with_diagnostics(m, snapshots, averages, tsnapstart, tsnapint)
 
-# Removes attributes for saving purposes
-del m_ds.attrs['pyqg:delta']
-del m_ds.attrs['pyqg:pmodes']
-del m_ds.attrs['pyqg:radii']
+# m_ds = functions.save_with_diagnostics(m, snapshots, averages, tsnapstart, tsnapint)
 
-# Save model output to path
-m_ds.to_netcdf(path + '/model_output.nc')
-print('Run and saving complete')
+# # Removes attributes for saving purposes
+# del m_ds.attrs['pyqg:delta']
+# del m_ds.attrs['pyqg:pmodes']
+# del m_ds.attrs['pyqg:radii']
+
+# # Save model output to path
+# m_ds.to_netcdf(path + '/model_output.nc')
+# print('Run and saving complete')
+
+functions.save_layered_model(m, snapshots, averages, tsnapstart, tsnapint, path, tc_save)

@@ -1,45 +1,6 @@
 import numpy as np
 import xarray as xr
 
-### Adding Qx and htop to xarray ###
-'''Note: really, I want to change the native pyqg to_dataset() function to do that.'''
-
-def to_xr_dataset(m):
-    
-    m_ds = m.to_dataset()
-    
-    # Add zonal PV gradient to xarray dataset
-    Qy = m_ds.Qy
-    Qx = m.Qx
-    Qx = xr.DataArray(
-            data = Qx,
-            dims = Qy.dims,
-            coords = Qy.coords,
-            attrs = Qy.attrs)
-    Qx.name = 'Qx'
-    m_ds['Qx'] = Qx
-    
-    # Add bottom topography array
-    
-    htop = m.htop[0,:,:]
-    x = m_ds.x.data
-    y = m_ds.y.data
-    htop = xr.DataArray(
-            data = htop,
-            dims = ['x', 'y'],
-            coords = {
-                'x': ('x', x),
-                'y': ('y', y)},
-            attrs = dict(
-                units = 'm',
-                long_name = 'height of bottom topography field'))
-    htop.name = 'htop'
-    m_ds['htop'] = htop
-    m_ds = m_ds.fillna(0.)   # Replace nans with zeros for topography at higher levels
-    
-    return m_ds
-
-
 
 ### Saving with snapshots or diagnostics ###
 '''Note: Should use save with diagnostics if I want all the energy variables.'''
@@ -78,15 +39,16 @@ def save_with_snapshots(m, tsnapstart, tsnapint):
 
 def save_with_diagnostics(m, snapshots, averages, tsnapstart, tsnapint):
     '''
-    Steps the mode forward, which has already been initialized with dt, tmax, tavestart, taveint, etc. forward
+    Steps the model (which has already been initialized with dt, tmax, tavestart, taveint, etc.) forward
     yielding (returns the model state) at an interval tsnapint = taveint + dt.
     Then saves the averaged diagnostics (averaged over an interval taveint) chosen to be saved (the list diags).
-    NOTE: Does not include model at initialization step as diagnostics are not available then. I should 
     
     Inputs:
     m : model initialization
     snapshots : list of strings of snapshot names
     averages : list of strings of average names
+    tsnapstart : the time to start yielding snapshots/returning averages at intervals
+    tsnapint : the interval after which to yield snapshots/return averages
     '''
     
     datasets = []            # Empty list for all the model states at interval tsnapint
@@ -109,6 +71,111 @@ def save_with_diagnostics(m, snapshots, averages, tsnapstart, tsnapint):
                     data_vars = 'minimal')
     
     return m_ds
+
+
+
+def save_layered_model(m, snapshots, averages, tsnapstart, tsnapint, path_save, tc_save):
+    '''
+    Steps the layered model (which has already been initialized with dt, tmax, tavestart, taveint, etc.) forward
+    yielding (returns the model state) at an interval tsnapint = taveint + dt.
+    Then saves the averaged diagnostics (averaged over an interval taveint) chosen to be saved (the list diags).
+    The fact that it is the layered model is important as when the time comes to save, certain attributes unique
+    to the layered model have to be removed for the purposes of saving as a .nc file.
+    
+    Inputs:
+    m : model initialization
+    snapshots : list of strings of snapshot names
+    averages : list of strings of average names
+    tsnapstart : the time to start yielding snapshots/returning averages at intervals
+    tsnapint : the interval after which to yield snapshots/return averages
+    path : the path to the directory at which to save
+    tc_save : the frequency with which to save (e.g., every 1000 timesteps) [units: number of model timesteps]
+    '''
+    
+    datasets = []            # Empty list for all the model states at interval tsnapint
+    m_i = m.to_dataset()     # xr dataset of initial model state
+    m_i = m_i[snapshots]     # initial model state including only the desired snapshots that we will save
+    
+    diagnostics = snapshots + averages
+    
+    i = 0
+    j = 0
+    
+    for _ in m.run_with_snapshots(tsnapstart = tsnapstart, tsnapint = tsnapint):
+        model_output = m.to_dataset()
+        model_diags = model_output[diagnostics]
+        
+        if i == 0:
+            m_i = xr.merge([m_i, model_diags]).isel(time = 0)  # Merges initial model state with final model state datasets to get diagnostic variables in initial model dataset
+                                                               # (filled as NaNs), then removes final state dataset
+            datasets.append(m_i)
+            i += 1
+       
+        datasets.append(model_diags)
+    
+        if (m.tc % tc_save) == 0:
+            m_ds = xr.concat(datasets, dim = 'time', data_vars = 'minimal')   # Concatenate all datasets between timesteps j * m.tc and (j + 1) * m.tc
+            del m_ds.attrs['pyqg:delta']                                      # Delete attributes that cannot be saved to a .nc file
+            del m_ds.attrs['pyqg:pmodes']
+            del m_ds.attrs['pyqg:radii']
+            m_ds.to_netcdf(path + f'/model_output_{j}.nc')                    # Save all datasets between between timesteps j * m.tc and (j + 1) * m.tc
+            del datasets                                                      # Deletes list of model states between timesteps j * m.tc and (j + 1) * m.tc
+            datasets = []                                                     # Redefines empty list to be used for the next set of model states
+            
+            print(f'Model states between {j * m.tc + 1} and {(j + 1) * m.tc} have been saved.')
+            j += 1
+            
+        
+    m_ds = xr.concat(datasets, dim = 'time', data_vars = 'minimal')   # Concatenate all datasets between timesteps j * m.tc and the end
+    del m_ds.attrs['pyqg:delta']                                      # Delete attributes that cannot be saved to a .nc file
+    del m_ds.attrs['pyqg:pmodes']
+    del m_ds.attrs['pyqg:radii']
+    m_ds.to_netcdf(path + f'/model_output_{j + 1}.nc')                # Save all datasets between between timesteps j * m.tc and the end
+            
+    print(f'Model states between {j * m.tc + 1} and {m.tc} have been saved.')      
+    print('Model run complete')
+
+
+
+
+### Adding Qx and htop to xarray ###
+'''Note: really, I want to change the native pyqg to_dataset() function to do that.'''
+
+def to_xr_dataset(m):
+    
+    m_ds = m.to_dataset()
+    
+    # Add zonal PV gradient to xarray dataset
+    Qy = m_ds.Qy
+    Qx = m.Qx
+    Qx = xr.DataArray(
+            data = Qx,
+            dims = Qy.dims,
+            coords = Qy.coords,
+            attrs = Qy.attrs)
+    Qx.name = 'Qx'
+    m_ds['Qx'] = Qx
+    
+    # Add bottom topography array
+    
+    htop = m.htop[0,:,:]
+    x = m_ds.x.data
+    y = m_ds.y.data
+    htop = xr.DataArray(
+            data = htop,
+            dims = ['x', 'y'],
+            coords = {
+                'x': ('x', x),
+                'y': ('y', y)},
+            attrs = dict(
+                units = 'm',
+                long_name = 'height of bottom topography field'))
+    htop.name = 'htop'
+    m_ds['htop'] = htop
+    m_ds = m_ds.fillna(0.)   # Replace nans with zeros for topography at higher levels
+    
+    return m_ds
+
 
 
 ### Defining topography functions ###
