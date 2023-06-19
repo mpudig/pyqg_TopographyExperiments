@@ -74,7 +74,7 @@ def save_with_diagnostics(m, snapshots, averages, tsnapstart, tsnapint):
 
 
 
-def save_layered_model(m, snapshots, averages, tsnapstart, tsnapint, path_save, tc_save):
+def save_layered_model(m, snapshots, averages, tsnapstart, tsnapint, path, tc_save):
     '''
     Steps the layered model (which has already been initialized with dt, tmax, tavestart, taveint, etc.) forward
     yielding (returns the model state) at an interval tsnapint = taveint + dt.
