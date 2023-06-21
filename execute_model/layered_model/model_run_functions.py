@@ -135,8 +135,23 @@ def save_layered_model(m, snapshots, averages, tsnapstart, tsnapint, path, tc_sa
     print(f'Model states between {j * m.tc + 1} and {m.tc} have been saved.')      
     print('Model run complete')
 
+### Saving topography field ###
 
-
+def save_htop(m, htop, path):
+    x = m.x[0, :]
+    y = m.y[:, 0]
+    htop = xr.DataArray(
+        data = htop,
+        dims = ['x', 'y'],
+        coords = {
+            'x': ('x', x),
+            'y': ('y', y)},
+        attrs = dict(
+            units = 'm',
+            long_name = 'height of bottom topography field'))
+    htop.name = 'htop'
+    htop_path = path + '/htop.nc'
+    htop.to_netcdf(htop_path)
 
 ### Adding Qx and htop to xarray ###
 '''Note: really, I want to change the native pyqg to_dataset() function to do that.'''
@@ -340,7 +355,7 @@ def set_q(K_0, mode, lambda_m_0, L, nx):
     # Recover q from q_h, and set the scale of q given a scale for the kinetic energy
     q = np.real(np.fft.ifftn(qh, axes = (-2, -1)))
     
-    ke = 1e-2
+    ke = 1e-1
     q = q / np.max(q)                                # Normalize to have maximum unit length
     c = np.sqrt(ke) / L
     q = c * q

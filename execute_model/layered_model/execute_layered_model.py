@@ -41,7 +41,7 @@ tsnapint = params.tsnapint
 m = pyqg.LayeredModel(nx = nx, nz = nz, L = L, H = H,
                       U = U, V = V, rho = rho, htop = htop,
                       f = f0, beta = beta, rek = rek,
-                      dt = dt, tmax = tmax, tavestart = tavestart, taveint = taveint)
+                      dt = dt, tmax = tmax, twrite = 10, tavestart = tavestart, taveint = taveint)
 
 ### Set initial condition for PV ###
 
@@ -56,34 +56,8 @@ averages = diags.averages
 path = params.path
 tc_save = params.tc_save
 
-
-# Save topography field 
-x = m.x[0, :]
-y = m.y[:, 0]
-htop = xr.DataArray(
-            data = htop,
-            dims = ['x', 'y'],
-            coords = {
-                'x': ('x', x),
-                'y': ('y', y)},
-            attrs = dict(
-                units = 'm',
-                long_name = 'height of bottom topography field'))
-htop.name = 'htop'
-htop_path = path + '/htop.nc'
-htop.to_netcdf(htop_path)
+# Save topography field
+functions.save_htop(m, htop, path)
 
 # Run and save model
-
-# m_ds = functions.save_with_diagnostics(m, snapshots, averages, tsnapstart, tsnapint)
-
-# # Removes attributes for saving purposes
-# del m_ds.attrs['pyqg:delta']
-# del m_ds.attrs['pyqg:pmodes']
-# del m_ds.attrs['pyqg:radii']
-
-# # Save model output to path
-# m_ds.to_netcdf(path + '/model_output.nc')
-# print('Run and saving complete')
-
 functions.save_layered_model(m, snapshots, averages, tsnapstart, tsnapint, path, tc_save)
