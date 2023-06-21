@@ -100,7 +100,7 @@ def save_layered_model(m, snapshots, averages, tsnapstart, tsnapint, path, tc_sa
     
     i = 0
     j = 0
-    
+    m_tc_init = 0
     for _ in m.run_with_snapshots(tsnapstart = tsnapstart, tsnapint = tsnapint):
         model_output = m.to_dataset()
         model_diags = model_output[diagnostics]
@@ -114,25 +114,26 @@ def save_layered_model(m, snapshots, averages, tsnapstart, tsnapint, path, tc_sa
         datasets.append(model_diags)
     
         if (m.tc % tc_save) == 0:
-            m_ds = xr.concat(datasets, dim = 'time', data_vars = 'minimal')   # Concatenate all datasets between timesteps j * m.tc and (j + 1) * m.tc
+            m_ds = xr.concat(datasets, dim = 'time', data_vars = 'minimal')   # Concatenate all datasets between given timesteps
             del m_ds.attrs['pyqg:delta']                                      # Delete attributes that cannot be saved to a .nc file
             del m_ds.attrs['pyqg:pmodes']
             del m_ds.attrs['pyqg:radii']
-            m_ds.to_netcdf(path + f'/model_output_{j}.nc')                    # Save all datasets between between timesteps j * m.tc and (j + 1) * m.tc
-            del datasets                                                      # Deletes list of model states between timesteps j * m.tc and (j + 1) * m.tc
+            m_ds.to_netcdf(path + f'/model_output_{j}.nc')                    # Save all datasets between between given timesteps
+            del datasets                                                      # Deletes list of model states between given timesteps
             datasets = []                                                     # Redefines empty list to be used for the next set of model states
             
-            print(f'Model states between {j * m.tc + 1} and {(j + 1) * m.tc} have been saved.')
+            print(f'Model states between {m_tc_init} and {m.tc} have been saved.')
+            m_tc_init = m.tc
             j += 1
             
         
-    m_ds = xr.concat(datasets, dim = 'time', data_vars = 'minimal')   # Concatenate all datasets between timesteps j * m.tc and the end
+    m_ds = xr.concat(datasets, dim = 'time', data_vars = 'minimal')   # Concatenate all datasets between given timesteps and the end
     del m_ds.attrs['pyqg:delta']                                      # Delete attributes that cannot be saved to a .nc file
     del m_ds.attrs['pyqg:pmodes']
     del m_ds.attrs['pyqg:radii']
-    m_ds.to_netcdf(path + f'/model_output_{j + 1}.nc')                # Save all datasets between between timesteps j * m.tc and the end
+    m_ds.to_netcdf(path + f'/model_output_{j + 1}.nc')                # Save all datasets between given timesteps and end
             
-    print(f'Model states between {j * m.tc + 1} and {m.tc} have been saved.')      
+    print(f'Model states between {m_tc_init + 1} and {m.tc} have been saved.')      
     print('Model run complete')
 
 ### Saving topography field ###
