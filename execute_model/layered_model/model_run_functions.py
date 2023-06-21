@@ -267,17 +267,28 @@ def monoscale_random(L, N, K_min, K_max, h_rms):
 def flat_bottom_modes(nz, z):
     '''
     The vertical modes, \phi, the eigenfunctions of the stretching operator,
-    satisfying d\phi/dz = 0 at z = 0 and d\phi/dz = 0 at z = -H
+    satisfying d\phi/dz = 0 at z = 0 and d\phi/dz = 0 at z = -H. The modes are evaluated
+    at the centers of the layer cells.
     
-    NOTE: I want to also give back the corresponding eigenvalues (i.e., the deformation radii!!!) 
+    Inputs:
+    nz : the number of layers
+    z : the _edges_ of the layer cells
+    
+    Outputs:
+    modes : array of the vertical modes evaluated at the _centers_ of the layer cells
     '''
     
     modes = np.zeros((nz, nz))
     H = z[-1]
+    dz = z[1] - z[0]
+    zc = z[:-1] + dz / 2
     
     for n in range(nz):
-        modes[n,:] = np.sqrt(2) * np.cos(n * np.pi / H * z)
+        modes[:, n] =  np.sqrt(2) * np.cos(n * np.pi / H * zc) 
         
+    # Normalize
+    modes = modes / np.linalg.norm(modes, axis = 0)    
+    
     return modes
 
 def flat_bottom_radii(g, f0, N0, Hmax, nz):
@@ -294,16 +305,27 @@ def flat_bottom_radii(g, f0, N0, Hmax, nz):
 def rough_bottom_modes(nz, z):
     '''
     The vertical modes, \phi, the eigenfunctions of the stretching operator,
-    satisfying d\phi/dz = 0 at z = 0 and \phi = 0 at z = -H
+    satisfying d\phi/dz = 0 at z = 0 and \phi = 0 at z = -H. The modes are evaluated
+    at the centers of the layer cells.
+        
+    Inputs:
+    nz : the number of layers
+    z : the _edges_ of the layer cells
     
-    NOTE: I want to also give back the corresponding eigenvalues (i.e., the deformation radii!!!) 
+    Outputs:
+    modes : array of the vertical modes evaluated at the _centers_ of the layer cells
     '''
     
     modes = np.zeros((nz, nz))
     H = z[-1]
+    dz = z[1] - z[0]
+    zc = z[:-1] + dz / 2
     
     for n in range(nz):
-        modes[n,:] = np.sqrt(2) * np.cos( (2 * n + 1) * np.pi / (2 * H) * z)
+        modes[:, n] =  np.sqrt(2) * np.cos((2 * n + 1) / 2 * np.pi / H * zc) 
+        
+    # Normalize
+    modes = modes / np.linalg.norm(modes, axis = 0)
         
     return modes
 
