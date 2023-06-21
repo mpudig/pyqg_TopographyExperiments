@@ -99,11 +99,11 @@ K_0 = 24.
 m_0 = 4.
 
 # Flat bottom
-# mode = functions.flat_bottom_modes(nz, zc)[:, int(m_0)]
+# mode = functions.flat_bottom_modes(nz, z)[:, int(m_0)]
 # lambda_m_0 = functions.flat_bottom_radii(g, f0, N0, Hmax, nz)[int(m_0)]
 
 # Rough bottom
-mode = functions.rough_bottom_modes(nz, zc)[:, int(m_0)]
+mode = functions.rough_bottom_modes(nz, z)[:, int(m_0)]
 lambda_m_0 = functions.rough_bottom_radii(f0, N0, Hmax, nz)[int(m_0)]
 
 # Set initial PV field
