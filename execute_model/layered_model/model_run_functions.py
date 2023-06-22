@@ -131,7 +131,7 @@ def save_layered_model(m, snapshots, averages, tsnapstart, tsnapint, path, tc_sa
     del m_ds.attrs['pyqg:delta']                                      # Delete attributes that cannot be saved to a .nc file
     del m_ds.attrs['pyqg:pmodes']
     del m_ds.attrs['pyqg:radii']
-    m_ds.to_netcdf(path + f'/model_output_{j + 1}.nc')                # Save all datasets between given timesteps and end
+    m_ds.to_netcdf(path + f'/model_output_{j}.nc')                # Save all datasets between given timesteps and end
             
     print(f'Model states between {m_tc_init + 1} and {m.tc} have been saved.')      
     print('Model run complete')
