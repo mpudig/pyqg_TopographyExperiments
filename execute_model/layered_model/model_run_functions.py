@@ -237,26 +237,40 @@ def band_pass(var, L, K_min, K_max):
     return var_bp
 
 
-def monoscale_random(L, N, K_min, K_max, h_rms):
+def monoscale_random(L, N, K_0, h_rms):
     '''
-    Takes in a square grid, , and minimum and maximum isotropic wavenumbers
+    Takes in a square grid, and minimum and maximum isotropic wavenumbers
     and returns a isotropic, homogeneous, monoscale topographic field.
     
     Inputs:
     L : side length of square box
     N : number of grid points in x and y
-    K_min : normalized (i.e., integer) isotropic minimum wavenumber
-    K_max : normalized (i.e., integer) isotropic maximum wavenumber
+    K_0 : central normalized (i.e., integer) isotropic minimum wavenumber
     h_rms : desired root mean square topographic height
     
     Ouputs:
     eta : topographic field (2D array shape (N, N))
     '''
+    
+    # Standard deviation for |\hat \psi|^2 in isotropic wavenumber space so that std = 1 with normalized wavenumbers
+    sigma = 4 * np.sqrt(2) * (2 * np.pi / L)
+    
+    # Define horizontal structure of PV
+    dk = 2 * np.pi / L
+    k = dk * np.append( np.arange(0, N / 2), np.arange(- N / 2, 0) )
+    l = k
+    kk, ll = np.meshgrid(k, l)
+    K2 = kk ** 2 + ll ** 2
+    K = np.sqrt(K2)
+    K_0 = K_0 * (2 * np.pi / L)
+    
+    # Isotropic Gaussian in wavenumber space
+    etah = np.exp(-(K - K_0) ** 2 / (2 * sigma ** 2)) * np.exp(2 * np.pi * 1j * np.random.randn(N, N))
 
-    eta = band_pass(np.random.rand(N, N) * 2 - 1, L, K_min, K_max)
+    # Recover eta from eta_h
+    eta = np.real(np.fft.ifftn(etah, axes = (-2, -1)))
     
     c = h_rms / np.sqrt(np.mean(eta**2))
-    
     eta = c * eta
     
     return eta
@@ -341,17 +355,23 @@ def rough_bottom_radii(f0, N0, Hmax, nz):
 
 ### Setting initial PV ### 
 
-def set_q(K_0, mode, lambda_m_0, L, nx):
+def set_q(K_0, eigenvector, L, nx, f0, g, rho, H, E_tot):
     '''
     Set an initial PV distribution with energy localized in spectral space
-    about K = K_0 and vertically in mode m.
-    
-    NOTE: ke sets the scale of the desired kinetic energy (from a scaling for U, which sets the scale of q
+    about K = K_0 and vertically in mode m. The PV field is also rescaled so that
+    the total energy is (approximately, it depends on the vertical discretization unfortunately)
+    given by E_tot.
     
     Inputs:
     K_0 : normalized (i.e., integer) isotropic wavenumber where the energy is localized (an isotropic Gassian in normalized wavenumber space with std = 1)
-    m_0 : the vertical mode number
-    lambda_m_0 : the eigenvalue associated with the chosen vertical mode, i.e., the inverse deformation length squared associated with the mode
+    eigenvector : the vertical mode that sets the vertical structure of q
+    L : the length of the horizontal domain
+    nx : the number of grid cells in the horizontal domain
+    f0 : constant value of Coriolis
+    g : gravity
+    rho : array of imposed background densities in each layer
+    H : array of average depths in each layer
+    E_tot : the prescribed total energy for the initial condition
     '''
     
     # Standard deviation for |\hat \psi|^2 in isotropic wavenumber space so that std = 1 with normalized wavenumbers
@@ -366,22 +386,58 @@ def set_q(K_0, mode, lambda_m_0, L, nx):
     K = np.sqrt(K2)
     K_0 = K_0 * (2 * np.pi / L)
 
-    # Isotropic Gaussian
+    # \hat \psi is isotropic Gaussian, we also want it to correspond to a real field so force it to do so
     psih = np.exp(-(K - K_0)**2 / (2 * sigma ** 2)) * np.exp(2 * np.pi * 1j * np.random.randn(nx, nx))
+    psi = np.fft.irfftn(psih[:, :int(nx / 2) + 1], axes = (-2,-1))
+    psih = np.fft.fftn(psi, axes = (-2, -1))
     
     # Define vertical structure of streamfunction
-    psih = psih[np.newaxis, :, :] * mode[:, np.newaxis, np.newaxis]
+    psih = psih[np.newaxis, :, :] * eigenvector[:, np.newaxis, np.newaxis]
+    
+    # Calculate total energy and scaling factor so that energy of nondimensional system is unity
+    f2 = f0 ** 2
+    gpi = g * (rho[1:] - rho[:-1]) / rho[:-1]   # Reduced gravities
+    M = nx * nx                                 # Spectral normalization
+    
+    KE = L ** 2 * 1 / (2 * H.sum()) * (H[:, np.newaxis, np.newaxis] * K2[np.newaxis, :, :] * np.abs(psih / M)**2).sum()
+    APE = L ** 2 * 1 / (2 * H.sum()) * (f2 / gpi[:, np.newaxis, np.newaxis] * np.abs(psih[:-1, :, :] / M - psih[1:, :, :] / M) ** 2).sum()
+    E = KE + APE
+    c = np.sqrt(E_tot / E)
+    psih = c * psih
+
+    
+    # Calculate matrix to get qh from psih
+    nz = H.size
+    
+    S = np.zeros((nz, nz))
+    for i in range(nz):
+        
+        if i == 0:
+            S[i, i]   = - f2 / Hi[i] / gpi[i]
+            S[i, i + 1] =  f2 / Hi[i] / gpi[i]
+
+        elif i == nz - 1:
+            S[i, i]   = - f2 / Hi[i] / gpi[i - 1]
+            S[i, i - 1] =  f2 / Hi[i] / gpi[i - 1]
+
+        else:
+            S[i, i - 1] = f2 / Hi[i] / gpi[i - 1]
+            S[i, i] = - (f2 / Hi[i] / gpi[i] + f2 / Hi[i] / gpi[i - 1])
+            S[i, i + 1] = f2 / Hi[i] / gpi[i]
+            
+    I = np.eye(nz)[:, :, np.newaxis, np.newaxis]
+    M = S[:, :, np.newaxis, np.newaxis] - I * K2
     
     # Get qh from psih
-    qh = - (K2[np.newaxis, :, :] + lambda_m_0 ** 2) * psih
-    
-    # Recover q from q_h, and set the scale of q given a scale for the kinetic energy
+    qh = np.zeros_like(psih)
+    for m1 in range(nz):
+        for m2 in range(nz):
+            for j in range(nx):
+                for i in range(nx):
+                    qh[m2, j, i] = qh[m2, j, i] + M[m2, m1, j, i] * psih[m1, j, i]
+        
+    # Recover q    
     q = np.real(np.fft.ifftn(qh, axes = (-2, -1)))
-    
-    ke = 1e-1
-    q = q / np.max(q)                                # Normalize to have maximum unit length
-    c = np.sqrt(ke) / L
-    q = c * q
     
     return q
 
