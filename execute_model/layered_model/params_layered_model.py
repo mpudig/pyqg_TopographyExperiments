@@ -132,4 +132,5 @@ m_0 = 4.
 mode = functions.rough_bottom_modes(nz, z)[:, int(m_0)]
 
 # Set initial PV field
+E_tot = (Ld * U.mean()) ** 2
 qi = functions.set_q(K_0, mode, L, nx, f0, g, rho, H, E_tot)

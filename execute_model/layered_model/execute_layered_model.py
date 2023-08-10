@@ -5,27 +5,27 @@ import pyqg
 import numpy as np
 import xarray as xr
 
-### Grid ###
+            ### Grid ###
 
 nx = params.nx
 nz = params.nz
 L = params.L
 H = params.H
 
-### Planetary parameters ###
+            ### Planetary parameters ###
 
 f0 = params.f0
 beta = params.beta
 rek = params.rek
 
-### Background shear, stratification, topography ###
+            ### Background shear, stratification, topography ###
 
 U = params.U
 V = params.V
 rho = params.rho
 htop = params.htop
 
-### Time parameters ###
+            ### Time parameters ###
 
 dt = params.dt
 tmax = params.tmax
@@ -36,20 +36,20 @@ taveint = params.taveint
 tsnapstart = params.tsnapstart
 tsnapint = params.tsnapint
 
-### Initialize model instance ###
+            ### Initialize model instance ###
 
 m = pyqg.LayeredModel(nx = nx, nz = nz, L = L, H = H,
                       U = U, V = V, rho = rho, htop = htop,
                       f = f0, beta = beta, rek = rek,
                       dt = dt, tmax = tmax, twrite = 10, tavestart = tavestart, taveint = taveint)
 
-### Set initial condition for PV ###
+            ### Set initial condition for PV ###
 
 m.set_q(params.qi)
 
 
 
-### Run model with diagnostics at given frequency, and save at given path ###
+            ### Run model with diagnostics at given frequency, and save at given path ###
 
 snapshots = diags.snapshots
 averages = diags.averages

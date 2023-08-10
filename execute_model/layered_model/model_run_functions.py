@@ -196,45 +196,45 @@ def to_xr_dataset(m):
 
 ### Defining topography functions ###
 
-def band_pass(var, L, K_min, K_max):
-    '''
-    This function takes in a real 2D array, Fourier transforms it,
-    band-pass filters between K_min and K_max,
-    then inverse Fourier transforms it to return the low-pass filtered real 2D array.
+# def band_pass(var, L, K_min, K_max):
+#     '''
+#     This function takes in a real 2D array, Fourier transforms it,
+#     band-pass filters between K_min and K_max,
+#     then inverse Fourier transforms it to return the low-pass filtered real 2D array.
     
-    Inputs:
-    var : real 2D array
-    L : size of square domain
-    K_min : normalized (i.e., integer) isotropic minimum wavenumber
-    K_max : normalized (i.e., integer) isotropic maximum wavenumber 
+#     Inputs:
+#     var : real 2D array
+#     L : size of square domain
+#     K_min : normalized (i.e., integer) isotropic minimum wavenumber
+#     K_max : normalized (i.e., integer) isotropic maximum wavenumber 
     
-    Outputs:
-    var_hp : real 2D array
-    '''
+#     Outputs:
+#     var_hp : real 2D array
+#     '''
     
-    N = var.shape[0]
-    varh = np.fft.fft2(var)
+#     N = var.shape[0]
+#     varh = np.fft.fft2(var)
     
-    dk = 2 * np.pi / L
-    k = dk * np.append( np.arange(0, N / 2), np.arange(- (N - 1) / 2, 0) )
-    l = k
-    kk, ll = np.meshgrid(k, l)
-    K2 = kk ** 2 + ll ** 2
+#     dk = 2 * np.pi / L
+#     k = dk * np.append( np.arange(0, N / 2), np.arange(- (N - 1) / 2, 0) )
+#     l = k
+#     kk, ll = np.meshgrid(k, l)
+#     K2 = kk ** 2 + ll ** 2
     
-    K_min = K_min * (2 * np.pi / L)
-    K_max = K_max * (2 * np.pi / L)
+#     K_min = K_min * (2 * np.pi / L)
+#     K_max = K_max * (2 * np.pi / L)
     
-    # Do the band-pass on wavenumber matrix
-    K2_bp_eye = np.where((K2 <= K_max ** 2) & (K2 >= K_min ** 2), K2 / K2, 0 * K2)
-    K2_bp_eye[0,0] = 0
+#     # Do the band-pass on wavenumber matrix
+#     K2_bp_eye = np.where((K2 <= K_max ** 2) & (K2 >= K_min ** 2), K2 / K2, 0 * K2)
+#     K2_bp_eye[0,0] = 0
     
-    # Apply filter
-    varh_bp = varh * K2_bp_eye
+#     # Apply filter
+#     varh_bp = varh * K2_bp_eye
     
-    # Inverse FFT back to real space
-    var_bp = np.real(np.fft.ifft2(varh_bp))
+#     # Inverse FFT back to real space
+#     var_bp = np.real(np.fft.ifft2(varh_bp))
     
-    return var_bp
+#     return var_bp
 
 
 def monoscale_random(L, N, K_0, h_rms):
@@ -253,7 +253,7 @@ def monoscale_random(L, N, K_0, h_rms):
     '''
     
     # Standard deviation for |\hat \psi|^2 in isotropic wavenumber space so that std = 1 with normalized wavenumbers
-    sigma = 4 * np.sqrt(2) * (2 * np.pi / L)
+    sigma = np.sqrt(2) * (2 * np.pi / L)
     
     # Define horizontal structure of PV
     dk = 2 * np.pi / L
@@ -413,17 +413,17 @@ def set_q(K_0, eigenvector, L, nx, f0, g, rho, H, E_tot):
     for i in range(nz):
         
         if i == 0:
-            S[i, i]   = - f2 / Hi[i] / gpi[i]
-            S[i, i + 1] =  f2 / Hi[i] / gpi[i]
+            S[i, i]   = - f2 / H[i] / gpi[i]
+            S[i, i + 1] =  f2 / H[i] / gpi[i]
 
         elif i == nz - 1:
-            S[i, i]   = - f2 / Hi[i] / gpi[i - 1]
-            S[i, i - 1] =  f2 / Hi[i] / gpi[i - 1]
+            S[i, i]   = - f2 / H[i] / gpi[i - 1]
+            S[i, i - 1] =  f2 / H[i] / gpi[i - 1]
 
         else:
-            S[i, i - 1] = f2 / Hi[i] / gpi[i - 1]
-            S[i, i] = - (f2 / Hi[i] / gpi[i] + f2 / Hi[i] / gpi[i - 1])
-            S[i, i + 1] = f2 / Hi[i] / gpi[i]
+            S[i, i - 1] = f2 / H[i] / gpi[i - 1]
+            S[i, i] = - (f2 / H[i] / gpi[i] + f2 / H[i] / gpi[i - 1])
+            S[i, i + 1] = f2 / H[i] / gpi[i]
             
     I = np.eye(nz)[:, :, np.newaxis, np.newaxis]
     M = S[:, :, np.newaxis, np.newaxis] - I * K2
