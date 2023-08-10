@@ -3,7 +3,7 @@ import model_run_functions as functions
 
 
 
-### Save path ###
+            ### Save path ###
 
 # expt_name format: nxVALUE_nzVALUE_unforced/forced_linear/expstrat_hrmsVALUE_KtopoVALUE_K0VALUE_m0VALUE
 
@@ -79,7 +79,7 @@ N0 = N.mean()
 # N = np.sqrt(- g / rho.mean() * np.gradient(rho) / np.gradient(z)[:-1])
 
 
-                ### Random topography ###
+            ### Random topography ###
     
 K_topo = 15
 h_rms = 150.
