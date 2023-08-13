@@ -74,11 +74,14 @@ def save_with_diagnostics(m, snapshots, averages, tsnapstart, tsnapint):
 
 
 
-def save_layered_model(m, snapshots, averages, tsnapstart, tsnapint, path, tc_save):
+def save_layered_model(m, snapshots, averages, tsnapstart, tsnapint, tavestart, taveint, path, tc_save):
     '''
-    Steps the layered model (which has already been initialized with dt, tmax, tavestart, taveint, etc.) forward
-    yielding (returns the model state) at an interval tsnapint = taveint + dt.
-    Then saves the averaged diagnostics (averaged over an interval taveint) chosen to be saved (the list diags).
+    This function steps the layered model (which has already been initialized with dt, tmax, tavestart, taveint, etc.)
+    forward yielding (returns the model state) at an interval tsnapint = taveint. The snapshots and averages are offset from
+    each other by a distance tsnapint / 2 = taveint / 2. The first snapshot is available at t = 0 + tsnapint, whereas
+    the first average is available at t = 0 + 2 * snapint. Therefore, care must be taken when saving the first snapshot.
+    
+    I then save the averaged diagnostics (averaged over an interval taveint) chosen to be saved (the list diags).
     The fact that it is the layered model is important as when the time comes to save, certain attributes unique
     to the layered model have to be removed for the purposes of saving as a .nc file.
     
@@ -88,6 +91,8 @@ def save_layered_model(m, snapshots, averages, tsnapstart, tsnapint, path, tc_sa
     averages : list of strings of average names
     tsnapstart : the time to start yielding snapshots/returning averages at intervals
     tsnapint : the interval after which to yield snapshots/return averages
+    tavestart : the time to start averaging
+    taveint : the interval over which to average
     path : the path to the directory at which to save
     tc_save : the frequency with which to save (e.g., every 1000 timesteps) [units: number of model timesteps]
     '''
@@ -102,26 +107,43 @@ def save_layered_model(m, snapshots, averages, tsnapstart, tsnapint, path, tc_sa
     j = 0
     m_tc_init = 0
     for _ in m.run_with_snapshots(tsnapstart = tsnapstart, tsnapint = tsnapint):
-        model_output = m.to_dataset()
-        model_diags = model_output[diagnostics]
         
-        if i == 0:
-            m_i = xr.merge([m_i, model_diags]).isel(time = 0)  # Merges initial model state with final model state datasets to get diagnostic variables in initial model dataset
-                                                               # (filled as NaNs), then removes final state dataset
-            datasets.append(m_i)
+        model_output = m.to_dataset()
+        
+        if m.t < tavestart + taveint:
+            m_1 = model_output[snapshots]
+            
+        else:    
+            model_diags = model_output[diagnostics]
+            datasets.append(model_diags)
+            
             i += 1
-       
-        datasets.append(model_diags)
-    
+                
+        # This if statement is only to correctly store the initial condition and first snapshot model states.
+        if i == 1:
+            # Merges initial model state with final model state datasets to get diagnostic variables in initial model dataset (filled as NaNs), then removes final state dataset
+            m_i = xr.merge([m_i, model_diags]).isel(time = 0)  
+            datasets.insert(0, m_i)
+            
+            # Same as above, except for the first snapshot output (which doesn't have any averaged diagnostics and so must be treated differently)
+            m_1 = xr.merge([m_1, model_diags]).isel(time = 0)
+            datasets.insert(1, m_1)
+            
+                       
         if (m.tc % tc_save) == 0:
             m_ds = xr.concat(datasets, dim = 'time', data_vars = 'minimal')   # Concatenate all datasets between given timesteps
+            
+            # Delete annoying attributes which stuff up the saving
             del m_ds.attrs['pyqg:delta']                                      # Delete attributes that cannot be saved to a .nc file
             del m_ds.attrs['pyqg:pmodes']
             del m_ds.attrs['pyqg:radii']
+            
+            # Save to path and then delete the datasets from memory
             m_ds.to_netcdf(path + f'/model_output_{j}.nc')                    # Save all datasets between between given timesteps
             del datasets                                                      # Deletes list of model states between given timesteps
             datasets = []                                                     # Redefines empty list to be used for the next set of model states
             
+            # Tell me what happened
             print(f'Model states between {m_tc_init} and {m.tc} have been saved.')
             m_tc_init = m.tc
             j += 1
@@ -439,6 +461,24 @@ def set_q(K_0, eigenvector, L, nx, f0, g, rho, H, E_tot):
     # Recover q    
     q = np.real(np.fft.ifftn(qh, axes = (-2, -1)))
     
+    return q
+
+
+def get_q(path):
+    '''                                                                                                                                    
+    Picks up the second last snapshot of q from a previous run to be used as a restart field for a new run.
+    The reason for choosing the second last snapshot instead of the last is because of how the averaging window works.
+    The first two snapshots of the restarted model will be redunant, therefore, as I already have them from the previous run.
+    However, by restarting from the second last snapshot, it ensures that the new first average (which begins at an offset
+    of tavestart = tsnapint / 2) is the average immediately after that in the final snapshot from the previous run.
+    (See the dog-earred page in my Mar-Aug 2023 notebook.)
+                                                                                                                                           
+    path : the complete path to the .nc file which contains q.                                                                             
+    '''
+
+    arr = xr.open_dataset(path)
+    q = arr.q.isel(time = -2).load().values
+
     return q
 
 

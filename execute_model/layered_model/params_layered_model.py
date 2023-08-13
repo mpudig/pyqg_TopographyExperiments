@@ -90,32 +90,33 @@ htop = functions.monoscale_random(L, nx, K_topo, h_rms)
             ### Time parameters ###
 
 Ti = Ld / np.abs(U_top)              # estimate of the most unstable e-folding time scale, also nondimensionalizing factor for time [s]
-dt = Ti / 200.                       # time step [s]
+dt = Ti / 400.                       # time step [s]
+dt = np.ceil(dt / 60) * 60           # time step rounded to nearest minute [s] 
 tmax = 750 * Ti                      # simulation time [s]
 
-tavestart = 0.                       # start time for averaging [s]
-taveint = 60 * 60 * 24 * 1           # time interval used for averaging of diagnostics [s]
+tsnapstart = 0.                      # start time for yielding model states [s]
+tsnapint = 60 * 60 * 24              # time interval at which to yield model states [s]
 
-tsnapstart = tavestart               # start time for yielding model states
-tsnapint = taveint + dt              # time interval at which to yield model states
+tavestart = tsnapint / 2.            # start time to begin averaging [s]; begins halfway through the first snapshot
+taveint = tsnapint                   # time interval over which to average; very important that this is the same as tsnapint
 
 tc_save = 100                               # the number of model states to store in memory to save as .nc files - should be guided by the dimensionality of the dataset         
 tc_save = np.ceil(tsnapint / dt * tc_save)
 
     
-# Below is what I used for the freely evolving runs:
+# Below is what I used for the freely evolving runs (note the averaging window is wrong, needs to be changed, see above!):
 
-dt = 60 * 60 * 3                     # time step [s]
-tmax = 60 * 60 * 24 * 365 * 20       # end of integration [s]
+# dt = 60 * 60 * 3                     # time step [s]
+# tmax = 60 * 60 * 24 * 365 * 20       # end of integration [s]
 
-tavestart = 0.                       # start time for averaging [s]
-taveint = 60 * 60 * 24 * 1           # time interval used for averaging of diagnostics [s]
+# tavestart = 0.                       # start time for averaging [s]
+# taveint = 60 * 60 * 24 * 1           # time interval used for averaging of diagnostics [s]
 
-tsnapstart = tavestart               # start time for yielding model states
-tsnapint = taveint + dt              # time interval at which to yield model states
+# tsnapstart = tavestart               # start time for yielding model states
+# tsnapint = taveint + dt              # time interval at which to yield model states
 
-tc_save = 100                               # the number of model states to store in memory to save as .nc files - should be guided by the dimensionality of the dataset         
-tc_save = np.ceil(tsnapint / dt * tc_save)
+# tc_save = 100                               # the number of model states to store in memory to save as .nc files - should be guided by the dimensionality of the dataset         
+# tc_save = np.ceil(tsnapint / dt * tc_save)
 
 
 
@@ -134,3 +135,9 @@ mode = functions.rough_bottom_modes(nz, z)[:, int(m_0)]
 # Set initial PV field
 E_tot = (Ld * U.mean()) ** 2
 qi = functions.set_q(K_0, mode, L, nx, f0, g, rho, H, E_tot)
+
+
+            ### Restart from previous run ###
+    
+# restart_path = '/scratch/mp6191/pyqg_expts' + 'EXPT_NAME' + '/output/model_output_2.nc'
+# qi = functions.get_q(restart_path)
