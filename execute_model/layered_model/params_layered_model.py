@@ -17,7 +17,7 @@ path = '/scratch/mp6191/pyqg_expts' + expt_name + '/output'
 nx = 512         # Number of grid cells in x, y
 nz = 12          # Number of grid cells in z
 Ld = 50.e3       # First deformation radius
-L = 16 * Ld      # Length of square domain
+L = 36 * Ld      # Length of square domain
 
 Hmax = 4000.                        # Depth of model
 z = np.linspace(0, - Hmax, nz + 1)  # Cell edges 
@@ -29,7 +29,7 @@ zc = z[:-1] - H / 2                 # Cell centers
             ### Control parameters ###
     
 kappa_star = 0.3
-beta_star = 1.
+beta_star = 0.
 
 
 
@@ -91,14 +91,14 @@ htop = functions.monoscale_random(L, nx, K_topo, h_rms)
 
 Ti = Ld / np.abs(U_top)              # estimate of the most unstable e-folding time scale, also nondimensionalizing factor for time [s]
 dt = Ti / 400.                       # time step [s]
-dt = np.ceil(dt / 60) * 60           # time step rounded to nearest minute [s] 
+dt = np.ceil(dt / (60*60)) * 60*60   # time step rounded to nearest hour [s] 
 tmax = 750 * Ti                      # simulation time [s]
 
 tsnapstart = 0.                      # start time for yielding model states [s]
-tsnapint = 60 * 60 * 24              # time interval at which to yield model states [s]
+tsnapint = 60 * 60 * 24 * 5          # time interval at which to yield model states [s]
 
-tavestart = tsnapint / 2.            # start time to begin averaging [s]; begins halfway through the first snapshot
-taveint = tsnapint                   # time interval over which to average; very important that this is the same as tsnapint
+tavestart = 0.                       # start time to begin averaging [s]; begins halfway through the first snapshot
+taveint = dt                         # time interval over which to accumulate averages [s]
 
 tc_save = 100                               # the number of model states to store in memory to save as .nc files - should be guided by the dimensionality of the dataset         
 tc_save = np.ceil(tsnapint / dt * tc_save)
@@ -123,8 +123,8 @@ tc_save = np.ceil(tsnapint / dt * tc_save)
             ### Initial condition ###
 
 # The initial PV field will have energy concentrated at horizontal wavenumber K_0 and solely within vertical mode m_0, and with total energy equal to E_tot
-K_0 = 4.
-m_0 = 4.
+K_0 = 9.
+m_0 = 3.
 
 # Flat bottom
 # mode = functions.flat_bottom_modes(nz, z)[:, int(m_0)]

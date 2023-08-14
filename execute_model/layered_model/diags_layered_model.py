@@ -4,9 +4,9 @@
 
 snapshots = [
     'q',                   # potential vorticity in real space
-    'p',                   # streamfunction in real space
-    'u',                   # zonal velocity anomaly
-    'v',                   # meridional velocity anomaly
+#    'p',                   # streamfunction in real space
+#    'u',                   # zonal velocity anomaly
+#    'v',                   # meridional velocity anomaly
 #     'ufull',               # zonal full velocities in real space
 #     'vfull',               # meridional full velocities in real space
 #     'Ubg',                 # background zonal velocity
@@ -21,9 +21,9 @@ snapshots = [
 
 # Reorder the below for ease of readability, lots of them I won't use:
 averages = [
-#     'EKE',                 # mean eddy kinetic energy
-#     'KEspec',              # kinetic energy spectrum
-#     'APEspec',             # available potential energy spectrum 
+     'EKE',                 # mean eddy kinetic energy
+     'KEspec',              # kinetic energy spectrum
+     'APEspec',             # available potential energy spectrum 
 #     'Ensspec',             # enstrophy spectrum
 #     'KEspec_modal',        # modal kinetic energy spectra (NOTE: These are currently _flat_ modes)
 #     'PEspec_modal',        # modal potential energy spectra (NOTE: These are currently _flat_ modes)

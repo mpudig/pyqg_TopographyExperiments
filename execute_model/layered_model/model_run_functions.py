@@ -1,89 +1,90 @@
 import numpy as np
 import xarray as xr
 
+### Commented out functions means ones that need work/to be deleted ###
 
-### Saving with snapshots or diagnostics ###
-'''Note: Should use save with diagnostics if I want all the energy variables.'''
 
-def save_with_snapshots(m, tsnapstart, tsnapint):
-    '''
-    Steps the model, which has already been initizlied with dt, tmax, etc., forward
-    and yields (returns the model state) at an interval = tsnapint. Snapshots begin to be
-    outputted at tsnapstart (units: seconds).
-    
-    Output:
-    model_output : xarray dataset containing the model snapshots from t = 0 to t = tmax
-    at a temporal resolution dt_snap = tsnapint
-    '''
-    
-    datasets = []            # Empty list for all the model states at interval tsnapint
-    m_i = m.to_dataset()     # xr dataset of initial model state
-    
-    for _ in m.run_with_snapshots(tsnapstart = tsnapstart, tsnapint = tsnapint):
-        
-        # Note: if saving averages, tsnapint should be = taveint + dt (i.e., model yields a single timestep after averages have been accumulated and saved)
-        
-        model_output = m.to_dataset()
-        datasets.append(model_output)
-        
-    m_i = xr.merge([m_i, model_output]).isel(time = 0)  # Merges initial model state with final model state datasets to get diagnostic variables in initial model dataset (filled as NaNs), then removes final state dataset
-    datasets.insert(0, m_i)
-    
-    m_ds = xr.concat(datasets,
-                    dim = 'time',
-                    data_vars = 'minimal')
-    
-    m_ds = m_ds.fillna(0.)
-        
-    return m_ds
 
-def save_with_diagnostics(m, snapshots, averages, tsnapstart, tsnapint):
-    '''
-    Steps the model (which has already been initialized with dt, tmax, tavestart, taveint, etc.) forward
-    yielding (returns the model state) at an interval tsnapint = taveint + dt.
-    Then saves the averaged diagnostics (averaged over an interval taveint) chosen to be saved (the list diags).
+            ### Saving with snapshots or diagnostics ###
     
-    Inputs:
-    m : model initialization
-    snapshots : list of strings of snapshot names
-    averages : list of strings of average names
-    tsnapstart : the time to start yielding snapshots/returning averages at intervals
-    tsnapint : the interval after which to yield snapshots/return averages
-    '''
+# def save_with_snapshots(m, tsnapstart, tsnapint):
+#     '''
+#     Steps the model, which has already been initizlied with dt, tmax, etc., forward
+#     and yields (returns the model state) at an interval = tsnapint. Snapshots begin to be
+#     outputted at tsnapstart (units: seconds).
     
-    datasets = []            # Empty list for all the model states at interval tsnapint
-    m_i = m.to_dataset()     # xr dataset of initial model state
-    m_i = m_i[snapshots]     # initial model state including only the desired diagnostics (snapshot diagnostics only)
+#     Output:
+#     model_output : xarray dataset containing the model snapshots from t = 0 to t = tmax
+#     at a temporal resolution dt_snap = tsnapint
+#     '''
     
-    diagnostics = snapshots + averages
+#     datasets = []            # Empty list for all the model states at interval tsnapint
+#     m_i = m.to_dataset()     # xr dataset of initial model state
     
-    for _ in m.run_with_snapshots(tsnapstart = tsnapstart, tsnapint = tsnapint):
+#     for _ in m.run_with_snapshots(tsnapstart = tsnapstart, tsnapint = tsnapint):
+        
+#         # Note: if saving averages, tsnapint should be = taveint + dt (i.e., model yields a single timestep after averages have been accumulated and saved)
+        
+#         model_output = m.to_dataset()
+#         datasets.append(model_output)
+        
+#     m_i = xr.merge([m_i, model_output]).isel(time = 0)  # Merges initial model state with final model state datasets to get diagnostic variables in initial model dataset (filled as NaNs), then removes final state dataset
+#     datasets.insert(0, m_i)
+    
+#     m_ds = xr.concat(datasets,
+#                     dim = 'time',
+#                     data_vars = 'minimal')
+    
+#     m_ds = m_ds.fillna(0.)
+        
+#     return m_ds
+
+# def save_with_diagnostics(m, snapshots, averages, tsnapstart, tsnapint):
+#     '''
+#     Steps the model (which has already been initialized with dt, tmax, tavestart, taveint, etc.) forward
+#     yielding (returns the model state) at an interval tsnapint = taveint + dt.
+#     Then saves the averaged diagnostics (averaged over an interval taveint) chosen to be saved (the list diags).
+    
+#     Inputs:
+#     m : model initialization
+#     snapshots : list of strings of snapshot names
+#     averages : list of strings of average names
+#     tsnapstart : the time to start yielding snapshots/returning averages at intervals
+#     tsnapint : the interval after which to yield snapshots/return averages
+#     '''
+    
+#     datasets = []            # Empty list for all the model states at interval tsnapint
+#     m_i = m.to_dataset()     # xr dataset of initial model state
+#     m_i = m_i[snapshots]     # initial model state including only the desired diagnostics (snapshot diagnostics only)
+    
+#     diagnostics = snapshots + averages
+    
+#     for _ in m.run_with_snapshots(tsnapstart = tsnapstart, tsnapint = tsnapint):
                 
-        model_output = m.to_dataset()
-        model_diags = model_output[diagnostics]
-        datasets.append(model_diags)
+#         model_output = m.to_dataset()
+#         model_diags = model_output[diagnostics]
+#         datasets.append(model_diags)
         
-    m_i = xr.merge([m_i, model_diags]).isel(time = 0)  # Merges initial model state with final model state datasets to get diagnostic variables in initial model dataset (filled as NaNs), then removes final state dataset
-    datasets.insert(0, m_i)
+#     m_i = xr.merge([m_i, model_diags]).isel(time = 0)  # Merges initial model state with final model state datasets to get diagnostic variables in initial model dataset (filled as NaNs), then removes final state dataset
+#     datasets.insert(0, m_i)
         
-    m_ds = xr.concat(datasets,
-                    dim = 'time',
-                    data_vars = 'minimal')
+#     m_ds = xr.concat(datasets,
+#                     dim = 'time',
+#                     data_vars = 'minimal')
     
-    return m_ds
+#     return m_ds
 
 
 
-def save_layered_model(m, snapshots, averages, tsnapstart, tsnapint, tavestart, taveint, path, tc_save):
+def save_layered_model(m, snapshots, averages, tsnapstart, tsnapint, path, tc_save):
     '''
     This function steps the layered model (which has already been initialized with dt, tmax, tavestart, taveint, etc.)
-    forward yielding (returns the model state) at an interval tsnapint = taveint. The snapshots and averages are offset from
-    each other by a distance tsnapint / 2 = taveint / 2. The first snapshot is available at t = 0 + tsnapint, whereas
-    the first average is available at t = 0 + 2 * snapint. Therefore, care must be taken when saving the first snapshot.
+    forward yielding (returns the model state) at an interval tsnapint. The model state snapshot should include the desired
+    instantenous snapshot variables (e.g., q) as well as the averaged diagnostics that have been accumulating with a
+    frequency taveint.
     
-    I then save the averaged diagnostics (averaged over an interval taveint) chosen to be saved (the list diags).
-    The fact that it is the layered model is important as when the time comes to save, certain attributes unique
-    to the layered model have to be removed for the purposes of saving as a .nc file.
+    The fact that this function is for the layered model is important as when the time comes to save, certain 
+    attributes unique to the layered model have to be removed for the purposes of saving as a .nc file.
     
     Inputs:
     m : model initialization
@@ -91,44 +92,35 @@ def save_layered_model(m, snapshots, averages, tsnapstart, tsnapint, tavestart, 
     averages : list of strings of average names
     tsnapstart : the time to start yielding snapshots/returning averages at intervals
     tsnapint : the interval after which to yield snapshots/return averages
-    tavestart : the time to start averaging
-    taveint : the interval over which to average
     path : the path to the directory at which to save
     tc_save : the frequency with which to save (e.g., every 1000 timesteps) [units: number of model timesteps]
     '''
     
-    datasets = []            # Empty list for all the model states at interval tsnapint
-    m_i = m.to_dataset()     # xr dataset of initial model state
-    m_i = m_i[snapshots]     # initial model state including only the desired snapshots that we will save
+    datasets = []                       # Empty list for all the model states at interval tsnapint
+    m_i = (m.to_dataset())[snapshots]   # xr dataset of initial model state
     
     diagnostics = snapshots + averages
     
     i = 0
     j = 0
     m_tc_init = 0
+    
     for _ in m.run_with_snapshots(tsnapstart = tsnapstart, tsnapint = tsnapint):
         
-        model_output = m.to_dataset()
+        # Make xarray dataset including desired snapshots and averages 
+        model_output = (m.to_dataset())[diagnostics]
         
-        if m.t < tavestart + taveint:
-            m_1 = model_output[snapshots]
-            
-        else:    
-            model_diags = model_output[diagnostics]
-            datasets.append(model_diags)
-            
+        # Properly add the initial condition model state to the datasets list, with average diagnostics set to np.nan   
+        if i == 0:
+            m_i = xr.merge([m_i, model_output]).isel(time = 0)
+            datasets.append(m_i)
             i += 1
-                
-        # This if statement is only to correctly store the initial condition and first snapshot model states.
-        if i == 1:
-            # Merges initial model state with final model state datasets to get diagnostic variables in initial model dataset (filled as NaNs), then removes final state dataset
-            m_i = xr.merge([m_i, model_diags]).isel(time = 0)  
-            datasets.insert(0, m_i)
-            
-            # Same as above, except for the first snapshot output (which doesn't have any averaged diagnostics and so must be treated differently)
-            m_1 = xr.merge([m_1, model_diags]).isel(time = 0)
-            datasets.insert(1, m_1)
-            
+        
+        # Append the xarray dataset model state to the list of datasets
+        datasets.append(model_output)
+        
+        # Reset all average diagnostics so that the new set of averages begins and is available at next snapshot
+        m._initialize_diagnostics('all')
                        
         if (m.tc % tc_save) == 0:
             m_ds = xr.concat(datasets, dim = 'time', data_vars = 'minimal')   # Concatenate all datasets between given timesteps
@@ -158,7 +150,9 @@ def save_layered_model(m, snapshots, averages, tsnapstart, tsnapint, tavestart, 
     print(f'Model states between {m_tc_init + 1} and {m.tc} have been saved.')      
     print('Model run complete')
 
-### Saving topography field ###
+    
+    
+            ### Saving topography field ###
 
 def save_htop(m, htop, path):
     x = m.x[0, :]
@@ -176,47 +170,49 @@ def save_htop(m, htop, path):
     htop_path = path + '/htop.nc'
     htop.to_netcdf(htop_path)
 
-### Adding Qx and htop to xarray ###
-'''Note: really, I want to change the native pyqg to_dataset() function to do that.'''
+    
+    
+            ### Adding Qx and htop to xarray ###
+# '''Note: really, I want to change the native pyqg to_dataset() function to do that.'''
 
-def to_xr_dataset(m):
+# def to_xr_dataset(m):
     
-    m_ds = m.to_dataset()
+#     m_ds = m.to_dataset()
     
-    # Add zonal PV gradient to xarray dataset
-    Qy = m_ds.Qy
-    Qx = m.Qx
-    Qx = xr.DataArray(
-            data = Qx,
-            dims = Qy.dims,
-            coords = Qy.coords,
-            attrs = Qy.attrs)
-    Qx.name = 'Qx'
-    m_ds['Qx'] = Qx
+#     # Add zonal PV gradient to xarray dataset
+#     Qy = m_ds.Qy
+#     Qx = m.Qx
+#     Qx = xr.DataArray(
+#             data = Qx,
+#             dims = Qy.dims,
+#             coords = Qy.coords,
+#             attrs = Qy.attrs)
+#     Qx.name = 'Qx'
+#     m_ds['Qx'] = Qx
     
-    # Add bottom topography array
+#     # Add bottom topography array
     
-    htop = m.htop[0,:,:]
-    x = m_ds.x.data
-    y = m_ds.y.data
-    htop = xr.DataArray(
-            data = htop,
-            dims = ['x', 'y'],
-            coords = {
-                'x': ('x', x),
-                'y': ('y', y)},
-            attrs = dict(
-                units = 'm',
-                long_name = 'height of bottom topography field'))
-    htop.name = 'htop'
-    m_ds['htop'] = htop
-    m_ds = m_ds.fillna(0.)   # Replace nans with zeros for topography at higher levels
+#     htop = m.htop[0,:,:]
+#     x = m_ds.x.data
+#     y = m_ds.y.data
+#     htop = xr.DataArray(
+#             data = htop,
+#             dims = ['x', 'y'],
+#             coords = {
+#                 'x': ('x', x),
+#                 'y': ('y', y)},
+#             attrs = dict(
+#                 units = 'm',
+#                 long_name = 'height of bottom topography field'))
+#     htop.name = 'htop'
+#     m_ds['htop'] = htop
+#     m_ds = m_ds.fillna(0.)   # Replace nans with zeros for topography at higher levels
     
-    return m_ds
+#     return m_ds
 
 
 
-### Defining topography functions ###
+            ### Defining topography functions ###
 
 # def band_pass(var, L, K_min, K_max):
 #     '''
@@ -298,7 +294,7 @@ def monoscale_random(L, N, K_0, h_rms):
     return eta
 
 
-### Vertical modes ###
+            ### Vertical modes ###
 
 def flat_bottom_modes(nz, z):
     '''
@@ -375,7 +371,7 @@ def rough_bottom_radii(f0, N0, Hmax, nz):
     return radii
 
 
-### Setting initial PV ### 
+            ### Setting initial PV ### 
 
 def set_q(K_0, eigenvector, L, nx, f0, g, rho, H, E_tot):
     '''
@@ -466,23 +462,18 @@ def set_q(K_0, eigenvector, L, nx, f0, g, rho, H, E_tot):
 
 def get_q(path):
     '''                                                                                                                                    
-    Picks up the second last snapshot of q from a previous run to be used as a restart field for a new run.
-    The reason for choosing the second last snapshot instead of the last is because of how the averaging window works.
-    The first two snapshots of the restarted model will be redunant, therefore, as I already have them from the previous run.
-    However, by restarting from the second last snapshot, it ensures that the new first average (which begins at an offset
-    of tavestart = tsnapint / 2) is the average immediately after that in the final snapshot from the previous run.
-    (See the dog-earred page in my Mar-Aug 2023 notebook.)
+    Picks up the last snapshot of q from a previous run to be used as a restart field for a new run.
                                                                                                                                            
     path : the complete path to the .nc file which contains q.                                                                             
     '''
 
     arr = xr.open_dataset(path)
-    q = arr.q.isel(time = -2).load().values
+    q = arr.q.isel(time = -1).load().values
 
     return q
 
 
-### Setting background and initial conditions ###
+            ### Setting background and initial conditions ###
 
 def linear(top, bottom, z):
     '''
