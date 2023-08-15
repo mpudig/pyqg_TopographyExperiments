@@ -98,13 +98,23 @@ def save_layered_model(m, snapshots, averages, tsnapstart, tsnapint, path, tc_sa
     
     datasets = []                       # Empty list for all the model states at interval tsnapint
     m_i = (m.to_dataset())[snapshots]   # xr dataset of initial model state
-    
+
+    # Set all snapshots and averages we want to save
     diagnostics = snapshots + averages
+
+    # Set other averages as inactive so that pyqg doesn't calculate them as well, to reduce computational burden
+    averages_all = list(m.diagnostics.keys())
+    averages_inactive = [average for average in averages_all if average not in averages]
+
+    for d in list(averages_inactive):
+        m.diagnostics[d]['active'] = False
+
     
     i = 0
     j = 0
     m_tc_init = 0
-    
+
+    # Run the model forward
     for _ in m.run_with_snapshots(tsnapstart = tsnapstart, tsnapint = tsnapint):
         
         # Make xarray dataset including desired snapshots and averages 
@@ -121,7 +131,10 @@ def save_layered_model(m, snapshots, averages, tsnapstart, tsnapint, path, tc_sa
         
         # Reset all average diagnostics so that the new set of averages begins and is available at next snapshot
         m._initialize_diagnostics('all')
-                       
+        for d in list(averages_inactive):
+            m.diagnostics[d]['active'] = False
+
+        # Save as .nc file    
         if (m.tc % tc_save) == 0:
             m_ds = xr.concat(datasets, dim = 'time', data_vars = 'minimal')   # Concatenate all datasets between given timesteps
             
