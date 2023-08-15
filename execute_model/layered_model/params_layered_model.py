@@ -138,6 +138,9 @@ qi = functions.set_q(K_0, mode, L, nx, f0, g, rho, H, E_tot)
 
 
             ### Restart from previous run ###
-    
-# restart_path = '/scratch/mp6191/pyqg_expts' + 'EXPT_NAME' + '/output/model_output_2.nc'
+# import glob
+# import os
+# restart_path = '/scratch/mp6191/pyqg_expts' + '/nx256_nz12_unforced_linearstrat_hrms150_Ktopo15_initialK24_initialm4' + '/output'
+# restart_paths = sorted(glob.glob(restart_path + '/model_output_*.nc'), key = os.path.getmtime)
+# restart_path = restart_paths[-1]
 # qi = functions.get_q(restart_path)
