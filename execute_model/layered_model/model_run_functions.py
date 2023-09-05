@@ -1,80 +1,7 @@
 import numpy as np
 import xarray as xr
 
-### Commented out functions means ones that need work/to be deleted ###
-
-
-
             ### Saving with snapshots or diagnostics ###
-    
-# def save_with_snapshots(m, tsnapstart, tsnapint):
-#     '''
-#     Steps the model, which has already been initizlied with dt, tmax, etc., forward
-#     and yields (returns the model state) at an interval = tsnapint. Snapshots begin to be
-#     outputted at tsnapstart (units: seconds).
-    
-#     Output:
-#     model_output : xarray dataset containing the model snapshots from t = 0 to t = tmax
-#     at a temporal resolution dt_snap = tsnapint
-#     '''
-    
-#     datasets = []            # Empty list for all the model states at interval tsnapint
-#     m_i = m.to_dataset()     # xr dataset of initial model state
-    
-#     for _ in m.run_with_snapshots(tsnapstart = tsnapstart, tsnapint = tsnapint):
-        
-#         # Note: if saving averages, tsnapint should be = taveint + dt (i.e., model yields a single timestep after averages have been accumulated and saved)
-        
-#         model_output = m.to_dataset()
-#         datasets.append(model_output)
-        
-#     m_i = xr.merge([m_i, model_output]).isel(time = 0)  # Merges initial model state with final model state datasets to get diagnostic variables in initial model dataset (filled as NaNs), then removes final state dataset
-#     datasets.insert(0, m_i)
-    
-#     m_ds = xr.concat(datasets,
-#                     dim = 'time',
-#                     data_vars = 'minimal')
-    
-#     m_ds = m_ds.fillna(0.)
-        
-#     return m_ds
-
-# def save_with_diagnostics(m, snapshots, averages, tsnapstart, tsnapint):
-#     '''
-#     Steps the model (which has already been initialized with dt, tmax, tavestart, taveint, etc.) forward
-#     yielding (returns the model state) at an interval tsnapint = taveint + dt.
-#     Then saves the averaged diagnostics (averaged over an interval taveint) chosen to be saved (the list diags).
-    
-#     Inputs:
-#     m : model initialization
-#     snapshots : list of strings of snapshot names
-#     averages : list of strings of average names
-#     tsnapstart : the time to start yielding snapshots/returning averages at intervals
-#     tsnapint : the interval after which to yield snapshots/return averages
-#     '''
-    
-#     datasets = []            # Empty list for all the model states at interval tsnapint
-#     m_i = m.to_dataset()     # xr dataset of initial model state
-#     m_i = m_i[snapshots]     # initial model state including only the desired diagnostics (snapshot diagnostics only)
-    
-#     diagnostics = snapshots + averages
-    
-#     for _ in m.run_with_snapshots(tsnapstart = tsnapstart, tsnapint = tsnapint):
-                
-#         model_output = m.to_dataset()
-#         model_diags = model_output[diagnostics]
-#         datasets.append(model_diags)
-        
-#     m_i = xr.merge([m_i, model_diags]).isel(time = 0)  # Merges initial model state with final model state datasets to get diagnostic variables in initial model dataset (filled as NaNs), then removes final state dataset
-#     datasets.insert(0, m_i)
-        
-#     m_ds = xr.concat(datasets,
-#                     dim = 'time',
-#                     data_vars = 'minimal')
-    
-#     return m_ds
-
-
 
 def save_layered_model(m, snapshots, averages, tsnapstart, tsnapint, path, tc_save):
     '''
@@ -183,90 +110,9 @@ def save_htop(m, htop, path):
     htop_path = path + '/htop.nc'
     htop.to_netcdf(htop_path)
 
-    
-    
-            ### Adding Qx and htop to xarray ###
-# '''Note: really, I want to change the native pyqg to_dataset() function to do that.'''
-
-# def to_xr_dataset(m):
-    
-#     m_ds = m.to_dataset()
-    
-#     # Add zonal PV gradient to xarray dataset
-#     Qy = m_ds.Qy
-#     Qx = m.Qx
-#     Qx = xr.DataArray(
-#             data = Qx,
-#             dims = Qy.dims,
-#             coords = Qy.coords,
-#             attrs = Qy.attrs)
-#     Qx.name = 'Qx'
-#     m_ds['Qx'] = Qx
-    
-#     # Add bottom topography array
-    
-#     htop = m.htop[0,:,:]
-#     x = m_ds.x.data
-#     y = m_ds.y.data
-#     htop = xr.DataArray(
-#             data = htop,
-#             dims = ['x', 'y'],
-#             coords = {
-#                 'x': ('x', x),
-#                 'y': ('y', y)},
-#             attrs = dict(
-#                 units = 'm',
-#                 long_name = 'height of bottom topography field'))
-#     htop.name = 'htop'
-#     m_ds['htop'] = htop
-#     m_ds = m_ds.fillna(0.)   # Replace nans with zeros for topography at higher levels
-    
-#     return m_ds
-
 
 
             ### Defining topography functions ###
-
-# def band_pass(var, L, K_min, K_max):
-#     '''
-#     This function takes in a real 2D array, Fourier transforms it,
-#     band-pass filters between K_min and K_max,
-#     then inverse Fourier transforms it to return the low-pass filtered real 2D array.
-    
-#     Inputs:
-#     var : real 2D array
-#     L : size of square domain
-#     K_min : normalized (i.e., integer) isotropic minimum wavenumber
-#     K_max : normalized (i.e., integer) isotropic maximum wavenumber 
-    
-#     Outputs:
-#     var_hp : real 2D array
-#     '''
-    
-#     N = var.shape[0]
-#     varh = np.fft.fft2(var)
-    
-#     dk = 2 * np.pi / L
-#     k = dk * np.append( np.arange(0, N / 2), np.arange(- (N - 1) / 2, 0) )
-#     l = k
-#     kk, ll = np.meshgrid(k, l)
-#     K2 = kk ** 2 + ll ** 2
-    
-#     K_min = K_min * (2 * np.pi / L)
-#     K_max = K_max * (2 * np.pi / L)
-    
-#     # Do the band-pass on wavenumber matrix
-#     K2_bp_eye = np.where((K2 <= K_max ** 2) & (K2 >= K_min ** 2), K2 / K2, 0 * K2)
-#     K2_bp_eye[0,0] = 0
-    
-#     # Apply filter
-#     varh_bp = varh * K2_bp_eye
-    
-#     # Inverse FFT back to real space
-#     var_bp = np.real(np.fft.ifft2(varh_bp))
-    
-#     return var_bp
-
 
 def monoscale_random(L, N, K_0, h_rms):
     '''
@@ -307,82 +153,111 @@ def monoscale_random(L, N, K_0, h_rms):
     return eta
 
 
-            ### Vertical modes ###
-
-def flat_bottom_modes(nz, z):
+            ### Vertical modes and radii ###
+    
+def flat_bottom(f0, g, rho, H):
     '''
-    The vertical modes, \phi, the eigenfunctions of the stretching operator,
-    satisfying d\phi/dz = 0 at z = 0 and d\phi/dz = 0 at z = -H. The modes are evaluated
-    at the centers of the layer cells.
-    
-    Inputs:
-    nz : the number of layers
-    z : the _edges_ of the layer cells
-    
-    Outputs:
-    modes : array of the vertical modes evaluated at the _centers_ of the layer cells
+    Calculates the flat bottom vertical modes and radii (i.e., those associated with zero flux BCs at the surface and at the bottom).
     '''
     
-    modes = np.zeros((nz, nz))
-    H = z[-1]
-    dz = z[1] - z[0]
-    zc = z[:-1] + dz / 2
+    ### Generate flat bottom stretching matrix
+    nz = H.size
+    S = np.zeros((nz, nz))
     
-    for n in range(nz):
-        modes[:, n] =  np.sqrt(2) * np.cos(n * np.pi / H * zc) 
+    f2 = f0 ** 2
+    gpi = g * (rho[1:] - rho[:-1]) / rho[:-1]
+    
+    for i in range(nz):
         
-    # Normalize
-    modes = modes / np.linalg.norm(modes, axis = 0)    
-    
-    return modes
+        if i == 0:
+            S[i, i]   = - f2 / H[i] / gpi[i]
+            S[i, i + 1] =  f2 / H[i] / gpi[i]
 
-def flat_bottom_radii(g, f0, N0, Hmax, nz):
-    '''
-    The flat bottom deformation radii from the eigenvalue problem. Note that this assumes linear stratification
-    '''
+        elif i == nz - 1:
+            S[i, i]   = - f2 / H[i] / gpi[i - 1]
+            S[i, i - 1] =  f2 / H[i] / gpi[i - 1]
+
+        else:
+            S[i, i - 1] = f2 / H[i] / gpi[i - 1]
+            S[i, i] = - (f2 / H[i] / gpi[i] + f2 / H[i] / gpi[i - 1])
+            S[i, i + 1] = f2 / H[i] / gpi[i]
+            
+            
+    ### Calculate eigenvectors and eigenvalues of matrix
         
-    radii = np.array([N0 * Hmax / (f0 * n * np.pi) for n in range(1, nz)])  # Baroclinic deformation radii
-    radii = np.insert(radii, 0, np.sqrt(g * Hmax) / f0 )                    # Barotropic deformation radii
+    evals, evecs = np.linalg.eig(-S)
+    asort = evals.argsort()
     
-    return radii
+    # deformation radii
+    evals = evals[asort]
+    radii = 1. / np.sqrt(evals)
+    radii[0] = np.sqrt(g * H.sum()) / np.abs(f0)  # barotropic def. radius
+    
+    # eigenstructure
+    modes = evecs[:, asort]
+    
+    # normalize to have unit L2-norm
+    Ai = (H.sum() / (H[:, np.newaxis] * (modes**2)).sum(axis=0)) ** 0.5
+    modes = Ai[np.newaxis, :] * modes
+    
+    return modes, radii
 
 
-def rough_bottom_modes(nz, z):
+def rough_bottom(f0, g, rho, H):
     '''
-    The vertical modes, \phi, the eigenfunctions of the stretching operator,
-    satisfying d\phi/dz = 0 at z = 0 and \phi = 0 at z = -H. The modes are evaluated
-    at the centers of the layer cells.
+    Calculates the rough bottom vertical modes and radii (i.e., those associated with zero flux BC at the surface and zero Dirichlet at the bottom).
+    One has to extrapolate the rho array to have a value in the layer below that explicitly modelled in order to have second order accuracy at the
+    bottom boundary. Note that the way I currently have this set up assumes that the rho profile is linear. I should modify this for when I will have
+    exponential, or other more general, stratifications.
+    '''
+    
+    ### Generate rough bottom stretching matrix
+    nz = H.size
+    S = np.zeros((nz, nz))
+    
+    f2 = f0 ** 2
+    # Extrapolate density to have a value in the layer below that modelled. Note that this currently assumes a linear density profile.
+    drho = np.diff(rho)[0]
+    rho = np.append(rho, rho[-1] + drho)
+    gpi = g * (rho[1:] - rho[:-1]) / rho[:-1]
+    
+    for i in range(nz):
         
-    Inputs:
-    nz : the number of layers
-    z : the _edges_ of the layer cells
-    
-    Outputs:
-    modes : array of the vertical modes evaluated at the _centers_ of the layer cells
-    '''
-    
-    modes = np.zeros((nz, nz))
-    H = z[-1]
-    dz = z[1] - z[0]
-    zc = z[:-1] + dz / 2
-    
-    for n in range(nz):
-        modes[:, n] =  np.sqrt(2) * np.cos((2 * n + 1) / 2 * np.pi / H * zc) 
+        if i == 0:
+            S[i, i]   = - f2 / H[i] / gpi[i]
+            S[i, i + 1] =  f2 / H[i] / gpi[i]
+
+        elif i == nz - 1:
+            S[i, i]   = - f2 / H[i] / gpi[i - 1]
+            S[i, i - 1] =  f2 / H[i] / gpi[i - 1]
+
+        else:
+            S[i, i - 1] = f2 / H[i] / gpi[i - 1]
+            S[i, i] = - (f2 / H[i] / gpi[i] + f2 / H[i] / gpi[i - 1])
+            S[i, i + 1] = f2 / H[i] / gpi[i]
+            
+    # Rough bottom stretching matrix simply adds a term to the S_nn entry of the flat bottom stretching matrix
+    S[nz - 1, nz - 1] -= 2 * f2 / (H[-1] * gpi[-1])
+            
+            
+    ### Calculate eigenvectors and eigenvalues of matrix
         
-    # Normalize
-    modes = modes / np.linalg.norm(modes, axis = 0)
-        
-    return modes
-
-def rough_bottom_radii(f0, N0, Hmax, nz):
-    '''
-    The rough bottom deformation radii from the eigenvalue problem. Note that this assumes linear stratification
-    '''
-
-    radii = np.array([2 * N0 * Hmax / (f0 * (2 * n + 1) * np.pi) for n in range(1, nz)])
+    evals, evecs = np.linalg.eig(-S)
+    asort = evals.argsort()
     
-    return radii
-
+    # deformation radii
+    evals = evals[asort]
+    radii = 1. / np.sqrt(evals)
+    
+    # eigenstructure
+    modes = evecs[:, asort]
+    
+    # normalize to have unit L2-norm
+    Ai = (H.sum() / (H[:, np.newaxis] * (modes**2)).sum(axis=0)) ** 0.5
+    modes = Ai[np.newaxis, :] * modes
+    
+    return modes, radii
+    
 
             ### Setting initial PV ### 
 
@@ -487,6 +362,18 @@ def get_q(path):
 
 
             ### Setting background and initial conditions ###
+    
+def rho_bottom(f0, g, Ld, Hmax, rho_top):
+    '''
+    Generates the rho_bottom which will result in a given deformation radius.
+    This is, note, assuming a flat bottom deformation radius.
+    '''
+
+    const = f0 ** 2 * np.pi ** 2 * Ld ** 2 / (2 * g * Hmax)
+    
+    rho_bottom = (1 + const) / (1 - const) * rho_top
+    
+    return rho_bottom
 
 def linear(top, bottom, z):
     '''
@@ -502,15 +389,3 @@ def exponential(top, bot, z, delta):
     '''
     
     return top - (top - bot) / (1 - np.exp(z[-1] / delta)) * (1 - np.exp(z/delta))
-
-def rho_bottom(f0, g, Ld, Hmax, rho_top):
-    '''
-    Generates the rho_bottom which will result in a given deformation radius.
-    This is, note, assuming a flat bottom deformation radius.
-    '''
-
-    const = f0 ** 2 * np.pi ** 2 * Ld ** 2 / (2 * g * Hmax)
-    
-    rho_bottom = (1 + const) / (1 - const) * rho_top
-    
-    return rho_bottom

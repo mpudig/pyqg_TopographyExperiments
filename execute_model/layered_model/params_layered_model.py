@@ -31,23 +31,7 @@ zc = z[:-1] - H / 2                 # Cell centers
 kappa_star = 0.3
 beta_star = 0.
 
-
-
-            ### Background shear ###
-
-# Zonal shear
-U_top = 0.04           # layer 1 zonal velocity
-U_bot = 0.             # layer nz zonal velocity
-
-# Linear shears
-U = 1 * functions.linear(U_top, U_bot, z[:-1])
-V = 0 * functions.linear(U_top, U_bot, z[:-1])
-
-# Exponential shears
-# delta = 1000.                        
-# U = 0 * functions.exponential(U_top, U_bot, z[:-1], delta)
-# V = 0 * functions.exponential(U_top, U_bot, z[:-1], delta)
-
+U0 = 0.02
 
 
             ### Planetary parameters ###
@@ -55,11 +39,11 @@ V = 0 * functions.linear(U_top, U_bot, z[:-1])
 g = 9.81                                  # Gravity
 omega = 7.2921159e-5                      # Earth rotation angular frequency
 a = 6.371e6                               # Average radius of Earth
-beta = U.mean() / Ld**2 * beta_star       # Beta corresponding to the value of the nondimensional beta
-lat = np.arccos(a * beta / (2 * omega))   # Latitude corresponding to that beta
-# f0 = 2 * omega * np.sin(lat)              # f0 corresponding to that latitude
 f0 = 1e-4                                 # constant value of f0
-rek = U.mean() / Ld * kappa_star          # Linear friction (Ekman) drag coefficient corresponding to the nondimensional kappa
+beta = U0 / Ld ** 2 * beta_star           # Beta corresponding to the value of the nondimensional beta
+lat = np.arccos(a * beta / (2 * omega))   # Latitude corresponding to that beta
+# f0 = 2 * omega * np.sin(lat)            # f0 corresponding to that latitude
+rek = U0 / Ld * kappa_star                # Linear friction (Ekman) drag coefficient corresponding to the nondimensional kappa
 
 
 
@@ -70,13 +54,24 @@ rho_bot = functions.rho_bottom(f0, g, Ld, Hmax, rho_top)         # layer nz dens
 
 # Linear profile
 rho = functions.linear(rho_top, rho_bot, z[:-1])
-N = np.sqrt(- g / rho.mean() * np.gradient(rho) / np.gradient(z)[:-1])
-N0 = N.mean()
 
 # Exponential profile
 # delta = 1000.
 # rho = functions.exponential(rho_top, rho_bot, z[:-1], delta)
-# N = np.sqrt(- g / rho.mean() * np.gradient(rho) / np.gradient(z)[:-1])
+
+flat_modes, flat_radii = functions.flat_bottom(f0, g, rho, H)
+rough_modes, rough_radii = functions.rough_bottom(f0, g, rho, H)
+
+
+
+            ### Background shear ###
+
+# Project the shear onto the first baroclinic mode
+BC1_mode_flat = flat_modes[:, 1] / flat_modes[0, 1]
+BC1_mode_rough = rough_modes[:, 1] / rough_modes[0, 1]
+U = U0 * BC1_mode_rough
+V = 0 * BC1_mode_rough
+
 
 
             ### Random topography ###
@@ -89,7 +84,7 @@ htop = functions.monoscale_random(L, nx, K_topo, h_rms)
 
             ### Time parameters ###
 
-Ti = Ld / np.abs(U_top)              # estimate of the most unstable e-folding time scale, also nondimensionalizing factor for time [s]
+Ti = Ld / np.max(U)                  # estimate of the most unstable e-folding time scale, also nondimensionalizing factor for time [s]
 dt = Ti / 400.                       # time step [s]
 dt = np.ceil(dt / (60*60)) * 60*60   # time step rounded to nearest hour [s] 
 tmax = 750 * Ti                      # simulation time [s]
@@ -103,38 +98,18 @@ taveint = dt                         # time interval over which to accumulate av
 tc_save = 100                               # the number of model states to store in memory to save as .nc files - should be guided by the dimensionality of the dataset         
 tc_save = np.ceil(tsnapint / dt * tc_save)
 
-    
-# Below is what I used for the freely evolving runs (note the averaging window is wrong, needs to be changed, see above!):
-
-# dt = 60 * 60 * 3                     # time step [s]
-# tmax = 60 * 60 * 24 * 365 * 20       # end of integration [s]
-
-# tavestart = 0.                       # start time for averaging [s]
-# taveint = 60 * 60 * 24 * 1           # time interval used for averaging of diagnostics [s]
-
-# tsnapstart = tavestart               # start time for yielding model states
-# tsnapint = taveint + dt              # time interval at which to yield model states
-
-# tc_save = 100                               # the number of model states to store in memory to save as .nc files - should be guided by the dimensionality of the dataset         
-# tc_save = np.ceil(tsnapint / dt * tc_save)
-
-
 
             ### Initial condition ###
 
 # The initial PV field will have energy concentrated at horizontal wavenumber K_0 and solely within vertical mode m_0, and with total energy equal to E_tot
 K_0 = 9.
 m_0 = 3.
-
-# Flat bottom
-# mode = functions.flat_bottom_modes(nz, z)[:, int(m_0)]
-
-# Rough bottom
-mode = functions.rough_bottom_modes(nz, z)[:, int(m_0)]
+q_flat_mode = flat_modes[:, int(m_0)]
+q_rough_mode = rough_modes[:, int(m_0)]
 
 # Set initial PV field
 E_tot = (Ld * U.mean()) ** 2
-qi = functions.set_q(K_0, mode, L, nx, f0, g, rho, H, E_tot)
+qi = functions.set_q(K_0, q_rough_mode, L, nx, f0, g, rho, H, E_tot)
 
 
             ### Restart from previous run ###
