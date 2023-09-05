@@ -67,8 +67,8 @@ rough_modes, rough_radii = functions.rough_bottom(f0, g, rho, H)
             ### Background shear ###
 
 # Project the shear onto the first baroclinic mode
-BC1_mode_flat = flat_modes[:, 1] / flat_modes[0, 1]
-BC1_mode_rough = rough_modes[:, 1] / rough_modes[0, 1]
+BC1_mode_flat = flat_modes[:, 1] / np.sign(flat_modes[0, 1])
+BC1_mode_rough = rough_modes[:, 1] / np.sign(rough_modes[0, 1])
 U = U0 * BC1_mode_rough
 V = 0 * BC1_mode_rough
 
