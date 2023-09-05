@@ -25,7 +25,7 @@ V = params.V
 rho = params.rho
 htop = params.htop
 
-            ### Time parameters ###
+            ### Time parameters and threading ###
 
 dt = params.dt
 tmax = params.tmax
@@ -36,12 +36,14 @@ taveint = params.taveint
 tsnapstart = params.tsnapstart
 tsnapint = params.tsnapint
 
+ntd = params.ntd
+
             ### Initialize model instance ###
 
 m = pyqg.LayeredModel(nx = nx, nz = nz, L = L, H = H,
                       U = U, V = V, rho = rho, htop = htop,
                       f = f0, beta = beta, rek = rek,
-                      dt = dt, tmax = tmax, twrite = 10, tavestart = tavestart, taveint = taveint)
+                      dt = dt, tmax = tmax, twrite = 10, tavestart = tavestart, taveint = taveint, ntd = ntd)
 
             ### Set initial condition for PV ###
 

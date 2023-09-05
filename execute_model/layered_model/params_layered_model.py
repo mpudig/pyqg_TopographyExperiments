@@ -82,7 +82,7 @@ htop = functions.monoscale_random(L, nx, K_topo, h_rms)
 
 
 
-            ### Time parameters ###
+            ### Time parameters and threading ###
 
 Ti = Ld / np.max(U)                  # estimate of the most unstable e-folding time scale, also nondimensionalizing factor for time [s]
 dt = Ti / 400.                       # time step [s]
@@ -97,6 +97,8 @@ taveint = dt                         # time interval over which to accumulate av
 
 tc_save = 100                               # the number of model states to store in memory to save as .nc files - should be guided by the dimensionality of the dataset         
 tc_save = np.ceil(tsnapint / dt * tc_save)
+
+ntd = 8
 
 
             ### Initial condition ###
