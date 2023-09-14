@@ -79,7 +79,7 @@ V = 0 * V / ((V.max() - V.min()) / 2)
 
             ### Random topography ###
     
-K_topo = 60
+K_topo = L / Ld
 h_rms = 0.
 htop = functions.monoscale_random(L, nx, K_topo, h_rms)
 
@@ -106,7 +106,7 @@ ntd = 16
             ### Initial condition ###
 
 # The initial PV field will have energy concentrated at horizontal wavenumber K_0 and solely within vertical mode m_0, and with total energy equal to E_tot
-K_0 = 15.
+K_0 = L / Ld
 m_0 = 3.
 q_flat_mode = flat_modes[:, int(m_0)]
 q_rough_mode = rough_modes[:, int(m_0)]
