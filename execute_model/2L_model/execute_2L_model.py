@@ -39,10 +39,10 @@ ntd = params.ntd
             ### Initialize model instance ###
 
 m = pyqg.QGModel(nx = nx, L = L, H1 = H1, U1 = U1, U2 = U2, f = f0, beta = beta, rek = rek, htop = htop,
-                       dt = dt, tmax = tmax, twrite = 100)
+                       dt = dt, tmax = tmax, twrite = 100, tavestart = tavestart, taveint = taveint, ntd = ntd)
 
 # m = pyqg.QGModel_rough(nx = nx, L = L, H1 = H1, U1 = U1, U2 = U2, f = f0, beta = beta, rek = rek, htop = htop,
-#                        dt = dt, tmax = tmax, twrite = 100)
+#                        dt = dt, tmax = tmax, twrite = 100, tavestart = tavestart, taveint = taveint, ntd = ntd)
 
             ### Set initial condition for PV ###
 
