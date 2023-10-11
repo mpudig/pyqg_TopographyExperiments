@@ -106,7 +106,7 @@ ntd = 16
             ### Initial condition ###
 
 # The initial PV field will have energy concentrated at horizontal wavenumber K_0 and solely within vertical mode m_0, and with total energy equal to E_tot
-K_0 = L / Ld
+K_0 = L / (4 * Ld)
 m_0 = 3.
 q_flat_mode = flat_modes[:, int(m_0)]
 q_rough_mode = rough_modes[:, int(m_0)]
