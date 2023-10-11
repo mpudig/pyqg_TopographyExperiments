@@ -139,7 +139,6 @@ def monoscale_random(L, N, K_0, h_rms):
     kk, ll = np.meshgrid(k, l)
     K2 = kk ** 2 + ll ** 2
     K = np.sqrt(K2)
-    K_0 = K_0 * (2 * np.pi / L)
     
     # Isotropic Gaussian in wavenumber space
     etah = np.exp(-(K - K_0) ** 2 / (2 * sigma ** 2)) * np.exp(2 * np.pi * 1j * np.random.randn(N, N))
