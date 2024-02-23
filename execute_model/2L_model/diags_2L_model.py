@@ -23,7 +23,7 @@ snapshots = [
 averages = [
      'EKE',                 # mean eddy kinetic energy
      'KEspec',              # kinetic energy spectrum
-     'APEspec',             # available potential energy spectrum 
+#     'APEspec',             # available potential energy spectrum 
 #     'Ensspec',             # enstrophy spectrum
 #     'KEspec_modal',        # modal kinetic energy spectra (NOTE: These are currently _flat_ modes)
 #     'PEspec_modal',        # modal potential energy spectra (NOTE: These are currently _flat_ modes)

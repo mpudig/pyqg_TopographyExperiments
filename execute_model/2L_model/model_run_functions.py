@@ -64,9 +64,9 @@ def save_2L_model(m, snapshots, averages, tsnapstart, tsnapint, path, tc_save):
             m_ds = xr.concat(datasets, dim = 'time', data_vars = 'minimal')   # Concatenate all datasets between given timesteps
             
             # Delete annoying attributes which stuff up the saving
-            del m_ds.attrs['pyqg:delta']                                      # Delete attributes that cannot be saved to a .nc file
-            del m_ds.attrs['pyqg:pmodes']
-            del m_ds.attrs['pyqg:radii']
+           # del m_ds.attrs['pyqg:delta']                                      # Delete attributes that cannot be saved to a .nc file
+           # del m_ds.attrs['pyqg:pmodes']
+           # del m_ds.attrs['pyqg:radii']
             
             # Save to path and then delete the datasets from memory
             m_ds.to_netcdf(path + f'/model_output_{j}.nc')                    # Save all datasets between between given timesteps
@@ -135,7 +135,6 @@ def monoscale_random(L, N, K_0, h_rms):
     kk, ll = np.meshgrid(k, l)
     K2 = kk ** 2 + ll ** 2
     K = np.sqrt(K2)
-    K_0 = K_0 * (2 * np.pi / L)
     
     # Isotropic Gaussian in wavenumber space
     etah = np.exp(-(K - K_0) ** 2 / (2 * sigma ** 2)) * np.exp(2 * np.pi * 1j * np.random.randn(N, N))

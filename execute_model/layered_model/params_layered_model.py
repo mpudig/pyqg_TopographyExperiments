@@ -17,7 +17,7 @@ nz = 12                             # Number of grid cells in z
 Ld = 15.e3                          # First deformation radius
 Kd = 1 / Ld                         # First deformation wavenumber
 ld = 2 * np.pi / Kd                 # First deformation wavelength
-L = 10 * ld                         # Length of square domain
+L = 25 * ld                         # Length of square domain
 
 Hmax = 4000.                        # Depth of model
 z = np.linspace(0, - Hmax, nz + 1)  # Cell edges 
@@ -28,7 +28,7 @@ zc = z[:-1] - H / 2                 # Cell centers
 
             ### Control parameters ###
     
-kappa_star = 0.6                    # kappa* = kappa * ld / U = 1/(2*pi) * kappa * Ld / U
+kappa_star = 0.3                    # kappa* = kappa * ld / U = 1/(2*pi) * kappa * Ld / U
 # beta_star = 0.                      # beta* = beta * ld^2 / U = 1/(2*pi) * beta * Ld^2 / U
 U0 = 0.01
 
@@ -80,15 +80,15 @@ V = 0 * V / ((V.max() - V.min()) / 2)
     
 scaling = 1
 K_topo = scaling * Kd 
-h_rms = 0. / scaling
-htop = functions.monoscale_random(L, nx, K_topo, h_rms)
+h_rms = 1. / scaling
+htop = 0. *functions.monoscale_random(L, nx, K_topo, h_rms)
 
 
 
             ### Time parameters and threading ###
 
 Ti = Ld / np.max(U)                  # estimate of the most unstable e-folding time scale, also nondimensionalizing factor for time [s]
-dt = 10800.                          # time step [s]
+dt = 3600.                          # time step [s]
 tmax = 750 * Ti                      # simulation time [s]
 
 tsnapstart = 0.                      # start time for yielding model states [s]
